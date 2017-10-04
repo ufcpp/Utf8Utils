@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net35;net46;netstandard2.0</TargetFrameworks>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Description>UTF8 Utility. Decode, encode, search, compare, and getting hashcode are directly on ArraySegment&lt;byte&gt;. There is no string allocation.</Description>
+    <PackageLicenseUrl>https://github.com/ufcpp/Utf8Utils/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/ufcpp/Utf8Utils</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ufcpp/Utf8Utils</RepositoryUrl>
+    <PackageTags>UTF8</PackageTags>
+    <Copyright>Nobuyuki Iwanaga</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Number.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Number.cs</LastGenOutput>
+    </None>
+
+    <Compile Update="Number.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Number.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,284 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+var types = new[]
+{
+    "bool",
+    "byte",
+    "sbyte",
+    "short",
+    "ushort",
+    "int",
+    "uint",
+    "long",
+    "ulong",
+    "float",
+    "double",
+};
+
+var integers = new[]
+{
+    "byte",
+    "sbyte",
+    "short",
+    "ushort",
+    "int",
+    "uint",
+    "long",
+    "ulong",
+};
+
+var signedIntegers = new[]
+{
+    "sbyte",
+    "short",
+    "int",
+    "long",
+};
+
+var unsignedIntegers = new[]
+{
+    "byte",
+    "ushort",
+    "uint",
+    "ulong",
+};
+
+var floats = new[]
+{
+    "float",
+    "double",
+};
+#>
+#pragma warning disable 1591
+
+using System;
+using System.Runtime.InteropServices;
+
+namespace Utf8Utils
+{
+    public enum NumberType : byte
+    {
+        _null,
+<#
+foreach (var t in types)
+{
+#>
+        _<#= t #>,
+<#
+}
+#>
+        _DateTime,
+        _DateTimeOffset,
+    }
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct Number
+    {
+<#
+foreach (var t in types)
+{
+#>
+        [FieldOffset(0)] <#= t #> _<#= t #>;
+<#
+}
+#>
+
+        [FieldOffset(8)]
+        NumberType _type;
+
+        [FieldOffset(10)]
+        short _offset;
+
+        internal Number(NumberType type) : this() { _type = type; }
+
+<#
+foreach (var t in types)
+{
+#>
+        public <#= t #> <#= char.ToUpper(t[0]) + t.Substring(1) #> => _<#= t #>;
+<#
+}
+#>
+
+        public Number(bool b) : this() { _bool = b; _type = NumberType._bool; }
+        public Number(float b) : this() { _float = b; _type = NumberType._float; }
+        public Number(double b) : this() { _double = b; _type = NumberType._double; }
+<#
+foreach (var t in signedIntegers)
+{
+#>
+        public Number(<#= t #> b) : this() { _long = b; _type = NumberType._<#= t #>; }
+<#
+}
+foreach (var t in unsignedIntegers)
+{
+#>
+        public Number(<#= t #> b) : this() { _ulong = b; _type = NumberType._<#= t #>; }
+<#
+}
+#>
+
+<#
+foreach (var t in types)
+{
+#>
+        public static explicit operator Number (<#= t #> n) => new Number(n);
+<#
+}
+#>
+
+<#
+foreach (var t in types)
+{
+#>
+        public static explicit operator Number (<#= t #>? n) => n.HasValue ? new Number(n.GetValueOrDefault()) : default(Number);
+<#
+}
+#>
+
+<#
+foreach (var dst in integers)
+{
+#>
+        public static explicit operator <#= dst #> (Number n)
+        {
+            switch (n._type)
+            {
+<#
+    foreach (var src in integers)
+    {
+#>
+            case NumberType._<#= src #>:
+<#
+    }
+#>
+                return n._<#= dst #>;
+            }
+            throw new InvalidCastException();
+        }
+
+        public static explicit operator <#= dst #>? (Number n)
+        {
+            switch (n._type)
+            {
+            case NumberType._null: return null;
+<#
+    foreach (var src in integers)
+    {
+#>
+            case NumberType._<#= src #>:
+<#
+    }
+#>
+                return n._<#= dst #>;
+            }
+            throw new InvalidCastException();
+        }
+
+<#
+}
+#>
+<#
+foreach (var dst in floats)
+{
+#>
+        public static explicit operator <#= dst #> (Number n)
+        {
+            switch (n._type)
+            {
+<#
+    foreach (var src in floats)
+    {
+#>
+            case NumberType._<#= src #>: return unchecked((<#= dst #>)n._<#= src #>);
+<#
+    }
+#>
+            }
+            throw new InvalidCastException();
+        }
+
+        public static explicit operator <#= dst #>? (Number n)
+        {
+            switch (n._type)
+            {
+            case NumberType._null: return null;
+<#
+    foreach (var src in floats)
+    {
+#>
+            case NumberType._<#= src #>: return unchecked((<#= dst #>)n._<#= src #>);
+<#
+    }
+#>
+            }
+            throw new InvalidCastException();
+        }
+
+<#
+}
+#>
+
+        public static explicit operator bool (Number n)
+        {
+            if (n._type != NumberType._bool)
+                throw new InvalidCastException();
+            return n._bool;
+        }
+
+        public static explicit operator bool? (Number n)
+        {
+            if (n._type == NumberType._null) return null;
+
+            if (n._type != NumberType._bool)
+                throw new InvalidCastException();
+            return n._bool;
+        }
+
+        public Number(DateTime b) : this() { _long = b.Ticks; _type = NumberType._DateTime; }
+        public static explicit operator Number(DateTime n) => new Number(n);
+        public static explicit operator DateTime(Number n)
+            => n._type == NumberType._DateTime ? new DateTime(n._long) : throw new InvalidCastException();
+        public static explicit operator DateTime?(Number n)
+            => n._type == NumberType._null ? default(DateTime?)
+                : n._type == NumberType._DateTime ? new DateTime(n._long)
+                : throw new InvalidCastException();
+
+        public Number(DateTimeOffset b) : this() { _long = b.Ticks; _offset = (short)b.Offset.TotalMinutes; _type = NumberType._DateTimeOffset; }
+        public static explicit operator Number(DateTimeOffset n) => new Number(n);
+        public static explicit operator DateTimeOffset(Number n)
+            => n._type == NumberType._DateTimeOffset ? new DateTimeOffset(n._long, TimeSpan.FromMinutes(n._offset)) : throw new InvalidCastException();
+        public static explicit operator DateTimeOffset?(Number n)
+            => n._type == NumberType._null ? default(DateTimeOffset?)
+                : n._type == NumberType._DateTimeOffset ? new DateTimeOffset(n._long, TimeSpan.FromMinutes(n._offset))
+                : throw new InvalidCastException();
+
+        public override string ToString()
+        {
+            switch (_type)
+            {
+            default:
+            case NumberType._null: return "";
+<#
+    foreach (var t in types)
+    {
+#>
+            case NumberType._<#= t #>: return _<#= t #>.ToString();
+<#
+    }
+#>
+            case NumberType._DateTime: return ((DateTime)this).ToString();
+            case NumberType._DateTimeOffset: return ((DateTimeOffset)this).ToString();
+            }
+        }
+
+        public NumberType Type => _type;
+
+        public bool IsNull => _type == NumberType._null;
+    }
+}
