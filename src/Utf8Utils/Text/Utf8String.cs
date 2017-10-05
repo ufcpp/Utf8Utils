@@ -87,10 +87,13 @@ namespace Utf8Utils.Text
             // default(Utf8String) は Empty 扱い
             if (other == null) return false;
 
+            var len = Length;
+            if (len == 0 && other.Length == 0) return true;
+
             // UTF16 → UTF8: 全部が3バイト文字でも最大で3倍差
-            if (other.Length > 3 * Length) return false;
+            if (3 * other.Length < len) return false;
             // 全部が1バイト文字のときに長さ一致するのが最小
-            if (other.Length < Length) return false;
+            if (other.Length > len) return false;
 
             // 短い時だけ stackalloc を使う
             if (other.Length < 300)

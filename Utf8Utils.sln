@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{5F8FDFCD-1B9
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utf8Utils", "src\Utf8Utils\Utf8Utils.csproj", "{074E78A4-0318-496D-A923-1667B0393B7E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A89F45C2-F701-44B9-9E4D-4FF02294A194}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utf8UtilsTest", "tests\Utf8UtilsTest\Utf8UtilsTest.csproj", "{67FA8FE3-A23C-41DB-973F-953BD31B7080}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,12 +21,17 @@ Global
 		{074E78A4-0318-496D-A923-1667B0393B7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{074E78A4-0318-496D-A923-1667B0393B7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{074E78A4-0318-496D-A923-1667B0393B7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67FA8FE3-A23C-41DB-973F-953BD31B7080}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67FA8FE3-A23C-41DB-973F-953BD31B7080}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67FA8FE3-A23C-41DB-973F-953BD31B7080}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67FA8FE3-A23C-41DB-973F-953BD31B7080}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{074E78A4-0318-496D-A923-1667B0393B7E} = {5F8FDFCD-1B91-4A32-BA6C-EE160D44118F}
+		{67FA8FE3-A23C-41DB-973F-953BD31B7080} = {A89F45C2-F701-44B9-9E4D-4FF02294A194}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {35785CBD-0CF4-453A-ADB8-6FA8F17715BB}
