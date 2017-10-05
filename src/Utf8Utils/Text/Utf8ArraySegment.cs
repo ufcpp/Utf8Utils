@@ -58,7 +58,7 @@ namespace Utf8Utils.Text
         /// string 化。
         /// </summary>
         /// <returns></returns>
-        public override string ToString() => _buffer.Array == null ? null : System.Text.Encoding.UTF8.GetString(_buffer.Array, _buffer.Offset, _buffer.Count);
+        public override string ToString() => _buffer.Array == null ? "" : System.Text.Encoding.UTF8.GetString(_buffer.Array, _buffer.Offset, _buffer.Count);
 
         /// <summary>
         /// i byte 目を取得。

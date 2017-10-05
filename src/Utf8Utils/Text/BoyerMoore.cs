@@ -67,8 +67,8 @@ namespace Utf8Utils.Text
 
         public static unsafe int IndexOf(byte[] str, int strOffset, int strLength, byte[] pattern, int patternOffset, int patternLength)
         {
-            fixed (byte* ps = &str[0])
-            fixed (byte* pp = &pattern[0])
+            fixed (byte* ps = str)
+            fixed (byte* pp = pattern)
                 return IndexOf(ps + strOffset, strLength, pp + patternOffset, patternLength);
         }
 
