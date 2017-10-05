@@ -14,31 +14,31 @@ namespace Utf8Utils.Text
     /// <see cref="ArraySegment{T}"/>なのと、最適化甘いのとであんまり高速じゃないはずだけど、
     /// それでも<see cref="System.Text.Encoding.GetString(byte[])"/>とかでデコードするよりはだいぶ速いはず。
     /// </remarks>
-    public struct Utf8String : IEnumerable<byte>, IEquatable<Utf8String>, IEquatable<string>
+    public struct Utf8ArraySegment : IUtf8String, IEquatable<Utf8ArraySegment>
     {
         private readonly ArraySegment<byte> _buffer;
 
         /// <summary>
         /// string から初期化。
         /// </summary>
-        public Utf8String(string s) : this(System.Text.Encoding.UTF8.GetBytes(s)) { }
+        public Utf8ArraySegment(string s) : this(System.Text.Encoding.UTF8.GetBytes(s)) { }
 
         /// <summary>
         /// UTF8 文字列が入った byte 配列から初期化。
         /// </summary>
-        public Utf8String(byte[] encodedBytes) => _buffer = encodedBytes == null ? default(ArraySegment<byte>) : new ArraySegment<byte>(encodedBytes);
+        public Utf8ArraySegment(byte[] encodedBytes) => _buffer = encodedBytes == null ? default(ArraySegment<byte>) : new ArraySegment<byte>(encodedBytes);
 
         /// <summary>
         /// UTF8 文字列が入った byte 配列から初期化。
         /// </summary>
-        public Utf8String(byte[] data, int offset, int count) => _buffer = new ArraySegment<byte>(data, offset, count);
+        public Utf8ArraySegment(byte[] data, int offset, int count) => _buffer = new ArraySegment<byte>(data, offset, count);
 
         /// <summary>
         /// UTF8 文字列が入った <see cref="ArraySegment{T}"/> から初期化。
         /// </summary>
-        public Utf8String(ArraySegment<byte> encodedBytes) => _buffer = encodedBytes;
+        public Utf8ArraySegment(ArraySegment<byte> encodedBytes) => _buffer = encodedBytes;
 
-        internal ArraySegment<byte> Buffer => _buffer;
+        public ArraySegment<byte> Utf8 => _buffer;
 
         /// <summary>
         /// byte 列の列挙用。
@@ -78,10 +78,10 @@ namespace Utf8Utils.Text
         #region equality
 #pragma warning disable 1591
 
-        public static bool operator ==(Utf8String x, Utf8String y) => x.Equals(y);
-        public static bool operator !=(Utf8String x, Utf8String y) => x.Equals(y);
+        public static bool operator ==(Utf8ArraySegment x, Utf8ArraySegment y) => x.Equals(y);
+        public static bool operator !=(Utf8ArraySegment x, Utf8ArraySegment y) => x.Equals(y);
 
-        public bool Equals(Utf8String other) => _buffer.SequenceEqual(other._buffer);
+        public bool Equals(Utf8ArraySegment other) => _buffer.SequenceEqual(other._buffer);
         public bool Equals(string other)
         {
             // default(Utf8String) は Empty 扱い
@@ -107,7 +107,7 @@ namespace Utf8Utils.Text
         /// <summary>
         /// 文字列が短い時は、stackalloc した領域に GetBytes してバイナリ比較。
         /// </summary>
-        private bool ShortEquals(string other) => ArraySegmentExtensions.SequenceEqual(Buffer.Array, Buffer.Offset, Buffer.Count, other);
+        private bool ShortEquals(string other) => ArraySegmentExtensions.SequenceEqual(_buffer.Array, _buffer.Offset, _buffer.Count, other);
 
         /// <summary>
         /// 文字列が長い時は1文字ずつコードポイント比較。
@@ -135,7 +135,9 @@ namespace Utf8Utils.Text
             }
         }
 
-        public override bool Equals(object obj) => obj is Utf8String other && Equals(other) || obj is string s && Equals(s);
+        public bool Equals(IUtf8String other) => Utf8.SequenceEqual(other.Utf8);
+
+        public override bool Equals(object obj) => obj is Utf8ArraySegment other && Equals(other) || obj is string s && Equals(s);
 
         public override int GetHashCode() => FarmHash.GetHashCode(_buffer);
 
@@ -146,7 +148,7 @@ namespace Utf8Utils.Text
         /// 部分文字列を取得。
         /// </summary>
         /// <param name="index">取得したい部分文字列の開始位置。</param>
-        public Utf8String Substring(int index)
+        public Utf8ArraySegment Substring(int index)
         {
             return Substring(index, Length - index);
         }
@@ -156,7 +158,7 @@ namespace Utf8Utils.Text
         /// </summary>
         /// <param name="index">取得したい部分文字列の開始位置。</param>
         /// <param name="length">取得したい部分文字列の文字数。</param>
-        public Utf8String Substring(int index, int length)
+        public Utf8ArraySegment Substring(int index, int length)
         {
             if (index < 0)
             {
@@ -170,7 +172,7 @@ namespace Utf8Utils.Text
 
             if (length == 0)
             {
-                return default(Utf8String);
+                return default(Utf8ArraySegment);
             }
 
             if (length == Length)
@@ -183,13 +185,13 @@ namespace Utf8Utils.Text
                 throw new ArgumentOutOfRangeException("index");
             }
 
-            return new Utf8String(_buffer.Slice(index, length));
+            return new Utf8ArraySegment(_buffer.Slice(index, length));
         }
 
         /// <summary>
         /// 先頭の空白文字を除去。
         /// </summary>
-        public Utf8String TrimStart()
+        public Utf8ArraySegment TrimStart()
         {
             var it = new CodePointEnumerator(_buffer);
             while (it.MoveNext() && IsWhitespace(it.Current)) ;
@@ -230,7 +232,7 @@ namespace Utf8Utils.Text
         /// </summary>
         /// <param name="pattern">パターン。</param>
         /// <returns>見つかった場合その開始位置。見つからない場合 -1。</returns>
-        public int IndexOf(Utf8String pattern) => BoyerMoore.IndexOf(_buffer, pattern._buffer);
+        public int IndexOf(Utf8ArraySegment pattern) => BoyerMoore.IndexOf(_buffer, pattern._buffer);
 
         /// <summary>
         /// 文字列の中から特定のパターンを探す。
@@ -239,10 +241,10 @@ namespace Utf8Utils.Text
         /// <param name="pattern">パターン。</param>
         /// <returns>見つかった場合その開始位置。見つからない場合 -1。</returns>
         /// <summary>
-        public int IndexOf(Utf8String pattern, int startIndex) => BoyerMoore.IndexOf(_buffer.Slice(startIndex), pattern._buffer);
+        public int IndexOf(Utf8ArraySegment pattern, int startIndex) => BoyerMoore.IndexOf(_buffer.Slice(startIndex), pattern._buffer);
 
         /// <summary>
-        /// <see cref="Utf8String"/>のバイト列を列挙するための enumerator。
+        /// <see cref="Utf8ArraySegment"/>のバイト列を列挙するための enumerator。
         /// 実際のところ、<see cref="ArraySegment{T}"/>列挙子。
         /// </summary>
         public struct Enumerator : IEnumerator<byte>

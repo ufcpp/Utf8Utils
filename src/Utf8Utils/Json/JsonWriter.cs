@@ -41,7 +41,7 @@ namespace Utf8Utils.Json
 
             if (discriminator != null)
             {
-                Key(new Utf8String(discriminatorBytes));
+                Key(new Utf8ArraySegment(discriminatorBytes));
                 Value((Number)discriminator.Value);
             }
         }
@@ -119,7 +119,7 @@ namespace Utf8Utils.Json
 
         private unsafe void Write(double x)
         {
-            DoubleConversion.ToString(x, out var buffer);
+            FloatConversion.ToString(x, out var buffer);
             var b = stackalloc byte[NumberStringBuffer.MaxChars];
             var length = buffer.Format(b);
             _buffer.AddAll(b, length);
@@ -127,7 +127,7 @@ namespace Utf8Utils.Json
 
         private unsafe void Write(float x)
         {
-            DoubleConversion.ToString(x, out var buffer);
+            FloatConversion.ToString(x, out var buffer);
             var b = stackalloc byte[NumberStringBuffer.MaxChars];
             var length = buffer.Format(b);
             _buffer.AddAll(b, length);
@@ -187,7 +187,7 @@ namespace Utf8Utils.Json
             WriteAscii('"');
         }
 
-        public void Write(Utf8String s)
+        public void Write(Utf8ArraySegment s)
         {
             WriteAscii('"');
             foreach (var c in s)

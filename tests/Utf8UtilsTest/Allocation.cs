@@ -14,11 +14,11 @@ namespace Utf8UtilsTest
 
             foreach (var s in TestData.Data)
             {
-                NoAllocationWithForeach(new Utf8String(s.Utf8), N);
+                NoAllocationWithForeach(new Utf8ArraySegment(s.Utf8), N);
             }
         }
 
-        private static void NoAllocationWithForeach(Utf8String s, int n)
+        private static void NoAllocationWithForeach(Utf8ArraySegment s, int n)
         {
             var start = GC.GetTotalMemory(false);
 

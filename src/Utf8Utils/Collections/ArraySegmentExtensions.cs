@@ -34,6 +34,16 @@ namespace Utf8Utils.Collections
         public static ArraySegment<T> Slice<T>(this ArraySegment<T> segment, int offset) => new ArraySegment<T>(segment.Array, segment.Offset + offset, segment.Count - offset);
 
         /// <summary>
+        /// <see cref="ArraySegment{T}"/>の一部分を切り出す。
+        /// </summary>
+        public static ArraySegment<T> Slice<T>(this T[] array, int offset, int count) => new ArraySegment<T>(array, offset, count);
+
+        /// <summary>
+        /// <see cref="ArraySegment{T}"/>の一部分を切り出す。
+        /// </summary>
+        public static ArraySegment<T> Slice<T>(this T[] array, int offset) => new ArraySegment<T>(array, offset, array.Length - offset);
+
+        /// <summary>
         /// 配列化。
         /// </summary>
         public static byte[] ToArray(this ArraySegment<byte> segment)

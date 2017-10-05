@@ -4,7 +4,7 @@ using System.Text;
 namespace Utf8Utils.Text.DoubleConversion
 {
     /// <summary>
-    /// <see cref="DoubleConversion"/>の結果を受け取るためのバッファー構造体。
+    /// <see cref="FloatConversion"/>の結果を受け取るためのバッファー構造体。
     /// </summary>
     public unsafe struct NumberStringBuffer
     {

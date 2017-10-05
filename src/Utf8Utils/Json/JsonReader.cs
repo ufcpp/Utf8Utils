@@ -33,14 +33,14 @@ namespace Utf8Utils.Json
 
     public class JsonReader
     {
-        Utf8String _str;
+        Utf8ArraySegment _str;
         private int _index;
         private int _insideObject;
         private int _insideArray;
         public ReaderTokenType TokenType;
         private bool _jsonStartIsObject;
 
-        public JsonReader(Utf8String str)
+        public JsonReader(Utf8ArraySegment str)
         {
             _str = str.TrimStart();
             _index = 0;
@@ -52,7 +52,7 @@ namespace Utf8Utils.Json
 
         public JsonReader(string str)
         {
-            _str = new Utf8String(str).TrimStart();
+            _str = new Utf8ArraySegment(str).TrimStart();
             _index = 0;
             _insideObject = 0;
             _insideArray = 0;
@@ -67,7 +67,7 @@ namespace Utf8Utils.Json
             return canRead;
         }
 
-        public Utf8String GetName()
+        public Utf8ArraySegment GetName()
         {
             SkipEmpty();
             var str = ReadStringValue();
@@ -79,7 +79,7 @@ namespace Utf8Utils.Json
         {
             var nextByte = (byte)_str[_index];
 
-            while (Utf8String.IsWhitespace(nextByte))
+            while (Utf8ArraySegment.IsWhitespace(nextByte))
             {
                 _index++;
                 nextByte = (byte)_str[_index];
@@ -123,7 +123,7 @@ namespace Utf8Utils.Json
             throw new FormatException("Invalid json, tried to read char '" + nextByte + "'.");
         }
 
-        public Utf8String GetValue()
+        public Utf8ArraySegment GetValue()
         {
             var type = GetJsonValueType();
             SkipEmpty();
@@ -141,13 +141,13 @@ namespace Utf8Utils.Json
                     return ReadNullValue();
                 case ReaderValueType.Object:
                 case ReaderValueType.Array:
-                    return default(Utf8String);
+                    return default(Utf8ArraySegment);
                 default:
                     throw new ArgumentException("Invalid json value type '" + type + "'.");
             }
         }
 
-        private Utf8String ReadStringValue()
+        private Utf8ArraySegment ReadStringValue()
         {
             _index++;
             var count = _index;
@@ -184,7 +184,7 @@ namespace Utf8Utils.Json
             return numOfBackSlashes % 2 != 0;
         }
 
-        private Utf8String ReadNumberValue()
+        private Utf8ArraySegment ReadNumberValue()
         {
             var count = _index;
 
@@ -236,7 +236,7 @@ namespace Utf8Utils.Json
             return resultStr;
         }
 
-        private Utf8String ReadTrueValue()
+        private Utf8ArraySegment ReadTrueValue()
         {
             var trueString = _str.Substring(_index, 4);
             if ((byte)trueString[1] != 'r' || (byte)trueString[2] != 'u' || (byte)trueString[3] != 'e')
@@ -250,7 +250,7 @@ namespace Utf8Utils.Json
             return trueString;
         }
 
-        private Utf8String ReadFalseValue()
+        private Utf8ArraySegment ReadFalseValue()
         {
             var falseString = _str.Substring(_index, 5);
             if ((byte)falseString[1] != 'a' || (byte)falseString[2] != 'l' || (byte)falseString[3] != 's' || (byte)falseString[4] != 'e')
@@ -264,7 +264,7 @@ namespace Utf8Utils.Json
             return falseString;
         }
 
-        private Utf8String ReadNullValue()
+        private Utf8ArraySegment ReadNullValue()
         {
             var nullString = _str.Substring(_index, 4);
             if ((byte)nullString[1] != 'u' || (byte)nullString[2] != 'l' || (byte)nullString[3] != 'l')
@@ -282,7 +282,7 @@ namespace Utf8Utils.Json
         {
             var nextByte = (byte)_str[_index];
 
-            while (Utf8String.IsWhitespace(nextByte))
+            while (Utf8ArraySegment.IsWhitespace(nextByte))
             {
                 _index++;
                 nextByte = (byte)_str[_index];
@@ -292,7 +292,7 @@ namespace Utf8Utils.Json
         private void MoveToNextTokenType()
         {
             var nextByte = (byte)_str[_index];
-            while (Utf8String.IsWhitespace(nextByte))
+            while (Utf8ArraySegment.IsWhitespace(nextByte))
             {
                 _index++;
                 nextByte = (byte)_str[_index];

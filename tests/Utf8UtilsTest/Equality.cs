@@ -13,7 +13,15 @@ namespace Utf8UtilsTest
             foreach (var (a, b) in TestData.Pairs)
             {
                 var strEquals = a.String == b.String;
-                var ut8Equals = new Utf8String(a.Utf8) == new Utf8String(b.Utf8);
+                var ut8Equals = new Utf8Array(a.Utf8) == new Utf8Array(b.Utf8);
+
+                Assert.Equal(strEquals, ut8Equals);
+            }
+
+            foreach (var (a, b) in TestData.Pairs)
+            {
+                var strEquals = a.String == b.String;
+                var ut8Equals = new Utf8ArraySegment(a.Utf8) == new Utf8ArraySegment(b.Utf8);
 
                 Assert.Equal(strEquals, ut8Equals);
             }
@@ -25,8 +33,18 @@ namespace Utf8UtilsTest
             foreach (var (a, b) in TestData.Pairs)
             {
                 var strEquals = a.String.Equals(b.String);
-                var ut8Equals = new Utf8String(a.Utf8).Equals(new Utf8String(b.Utf8));
-                var ut8StrEquals = new Utf8String(a.Utf8).Equals(b.String);
+                var ut8Equals = new Utf8ArraySegment(a.Utf8).Equals(new Utf8ArraySegment(b.Utf8));
+                var ut8StrEquals = new Utf8ArraySegment(a.Utf8).Equals(b.String);
+
+                Assert.Equal(strEquals, ut8Equals);
+                Assert.Equal(strEquals, ut8StrEquals);
+            }
+
+            foreach (var (a, b) in TestData.Pairs)
+            {
+                var strEquals = a.String.Equals(b.String);
+                var ut8Equals = new Utf8Array(a.Utf8).Equals(new Utf8Array(b.Utf8));
+                var ut8StrEquals = new Utf8Array(a.Utf8).Equals(b.String);
 
                 Assert.Equal(strEquals, ut8Equals);
                 Assert.Equal(strEquals, ut8StrEquals);
@@ -38,7 +56,13 @@ namespace Utf8UtilsTest
         {
             foreach (var s in TestData.Data)
             {
-                var utf8 = new Utf8String(s.Utf8);
+                var utf8 = new Utf8ArraySegment(s.Utf8);
+                Assert.True(((IEnumerable<uint>)utf8.CodePoints).SequenceEqual(s.String.GetCodePoints()));
+            }
+
+            foreach (var s in TestData.Data)
+            {
+                var utf8 = new Utf8Array(s.Utf8);
                 Assert.True(((IEnumerable<uint>)utf8.CodePoints).SequenceEqual(s.String.GetCodePoints()));
             }
         }
@@ -48,7 +72,16 @@ namespace Utf8UtilsTest
         {
             foreach (var s in TestData.Data)
             {
-                var utf8 = new Utf8String(s.Utf8);
+                var utf8 = new Utf8ArraySegment(s.Utf8);
+                EqualAsBytes(utf8, s.Utf8);
+                EqualAsCodePoints(utf8, s.Utf32I);
+
+                Assert.True(utf8.Equals(s.String));
+            }
+
+            foreach (var s in TestData.Data)
+            {
+                var utf8 = new Utf8Array(s.Utf8);
                 EqualAsBytes(utf8, s.Utf8);
                 EqualAsCodePoints(utf8, s.Utf32I);
 
@@ -56,7 +89,8 @@ namespace Utf8UtilsTest
             }
         }
 
-        private static void EqualAsCodePoints(Utf8String s, uint[] expected)
+        private static void EqualAsCodePoints<TUtf8>(TUtf8 s, uint[] expected)
+            where TUtf8 : IUtf8String
         {
             var codePoints = s.CodePoints.ToArray();
 
@@ -68,7 +102,8 @@ namespace Utf8UtilsTest
             }
         }
 
-        private static void EqualAsBytes(Utf8String s, byte[] expected)
+        private static void EqualAsBytes<TUtf8>(TUtf8 s, byte[] expected)
+            where TUtf8 : IUtf8String
         {
             var bytes = s.ToArray();
 

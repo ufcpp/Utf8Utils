@@ -5,7 +5,7 @@
     /// <summary>
     /// https://github.com/google/double-conversion/blob/master/double-conversion/fast-dtoa.cc
     /// </summary>
-    public static unsafe class DoubleConversion
+    public static unsafe class FloatConversion
     {
         private const int kMinimalTargetExponent = -60;
         private const int kMaximalTargetExponent = -32;

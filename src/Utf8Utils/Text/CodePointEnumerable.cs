@@ -15,6 +15,10 @@ namespace Utf8Utils.Text
         /// <param name="buffer">UTF8 が入った byte 列。</param>
         public CodePointEnumerable(ArraySegment<byte> buffer) => _buffer = buffer;
 
+        /// <summary></summary>
+        /// <param name="buffer">UTF8 が入った byte 列。</param>
+        public CodePointEnumerable(byte[] buffer) => _buffer = new ArraySegment<byte>(buffer);
+
         /// <summary><see cref="IEnumerable{T}.GetEnumerator"/></summary>
         public CodePointEnumerator GetEnumerator() => new CodePointEnumerator(_buffer);
         IEnumerator<uint> IEnumerable<uint>.GetEnumerator() => GetEnumerator();
