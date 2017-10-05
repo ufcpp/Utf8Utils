@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Utf8Utils.Text;
 using Xunit;
 
@@ -29,6 +30,16 @@ namespace Utf8UtilsTest
 
                 Assert.Equal(strEquals, ut8Equals);
                 Assert.Equal(strEquals, ut8StrEquals);
+            }
+        }
+
+        [Fact]
+        public void CodePointsSequenceEqual()
+        {
+            foreach (var s in TestData.Data)
+            {
+                var utf8 = new Utf8String(s.Utf8);
+                Assert.True(((IEnumerable<uint>)utf8.CodePoints).SequenceEqual(s.String.GetCodePoints()));
             }
         }
 
