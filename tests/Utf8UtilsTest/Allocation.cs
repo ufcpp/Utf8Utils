@@ -12,7 +12,7 @@ namespace Utf8UtilsTest
         {
             const int N = 1000;
 
-            foreach (var s in TestData.Data)
+            foreach (var s in StringTestData.Data)
             {
                 NoAllocationWithForeach(new Utf8ArraySegment(s.Utf8), N);
             }

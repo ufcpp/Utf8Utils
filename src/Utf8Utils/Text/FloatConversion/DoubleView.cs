@@ -1,38 +1,38 @@
-﻿namespace Utf8Utils.Text.DoubleConversion
+﻿namespace Utf8Utils.Text.FloatConversion
 {
     using Debug = System.Diagnostics.Debug;
 
     /// <summary>
     /// https://github.com/google/double-conversion/blob/master/double-conversion/ieee.h
     /// </summary>
-    internal struct SingleView
+    internal struct DoubleView
     {
-        private static unsafe uint BitCast(float x) => *(uint*)&x;
-        private static unsafe float BitCast(uint x) => *(float*)&x;
+        private static unsafe ulong BitCast(double x) => *(ulong*)&x;
+        private static unsafe double BitCast(ulong x) => *(double*)&x;
 
-        private const uint kSignMask = 0x80000000;
-        private const uint kExponentMask = 0x7F800000;
-        private const uint kSignificandMask = 0x007FFFFF;
-        private const uint kHiddenBit = 0x00800000;
-        private const int kPhysicalSignificandSize = 23;  // Excludes the hidden bit.
-        private const int kSignificandSize = 24;
-        private const int kExponentBias = 0x7F + kPhysicalSignificandSize;
+        private const ulong kSignMask = 0x80000000_00000000UL;
+        private const ulong kExponentMask = 0x7FF00000_00000000UL;
+        private const ulong kSignificandMask = 0x000FFFFF_FFFFFFFFUL;
+        private const ulong kHiddenBit = 0x00100000_00000000UL;
+        private const int kPhysicalSignificandSize = 52;  // Excludes the hidden bit.
+        private const int kSignificandSize = 53;
+        private const int kExponentBias = 0x3FF + kPhysicalSignificandSize;
         private const int kDenormalExponent = -kExponentBias + 1;
-        private const int kMaxExponent = 0xFF - kExponentBias;
-        private const uint kInfinity = 0x7F800000;
-        private const uint kNaN = 0x7FC00000;
+        private const int kMaxExponent = 0x7FF - kExponentBias;
+        private const ulong kInfinity = 0x7FF00000_00000000UL;
+        private const ulong kNaN = 0x7FF80000_00000000UL;
 
-        private uint _v;
+        private ulong _v;
 
-        public SingleView(float v) => _v = BitCast(v);
+        public DoubleView(double v) => _v = BitCast(v);
 
-        public float Value => BitCast(_v);
+        public double Value => BitCast(_v);
 
         public ulong Significand
         {
             get
             {
-                uint significand = _v & kSignificandMask;
+                ulong significand = _v & kSignificandMask;
                 if (!IsDenormal)
                 {
                     return significand + kHiddenBit;

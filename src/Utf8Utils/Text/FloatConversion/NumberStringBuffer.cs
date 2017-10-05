@@ -1,7 +1,7 @@
 ﻿using Utf8Utils.Collections;
 using System.Text;
 
-namespace Utf8Utils.Text.DoubleConversion
+namespace Utf8Utils.Text.FloatConversion
 {
     /// <summary>
     /// <see cref="FloatConversion"/>の結果を受け取るためのバッファー構造体。

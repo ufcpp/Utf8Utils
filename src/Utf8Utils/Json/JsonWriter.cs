@@ -3,7 +3,7 @@
 using Utf8Utils.Collections;
 using Utf8Utils.Text;
 using System;
-using Utf8Utils.Text.DoubleConversion;
+using Utf8Utils.Text.FloatConversion;
 
 namespace Utf8Utils.Json
 {

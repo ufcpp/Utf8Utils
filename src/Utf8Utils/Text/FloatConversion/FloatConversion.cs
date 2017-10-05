@@ -1,4 +1,4 @@
-﻿namespace Utf8Utils.Text.DoubleConversion
+﻿namespace Utf8Utils.Text.FloatConversion
 {
     using Debug = System.Diagnostics.Debug;
 

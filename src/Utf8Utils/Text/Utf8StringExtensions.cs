@@ -46,6 +46,13 @@ namespace Utf8Utils.Text
         /// <summary>
         /// <see cref="IUtf8String"/> 中の文字列を浮動小数点数化。
         /// </summary>
+        /// <remarks>
+        /// このコード、精度はそこまで高くない。
+        /// 値が小さい時、結構誤差が出る。
+        ///
+        /// double → string の方は https://github.com/google/double-conversion/blob/master/double-conversion/fast-dtoa.cc の移植なんだし、
+        /// Parse の方も double-conversion から移植してもいいかも。
+        /// </remarks>
         public static double ParseFloat<TUtf8>(this TUtf8 s) where TUtf8 : IUtf8String => ParseFloat(s.Utf8);
 
         private static double ParseFloat(ArraySegment<byte> seg)
@@ -111,7 +118,7 @@ namespace Utf8Utils.Text
             var d = (double)x;
 
             if (y > 0) exp -= y;
-            if (exp != 0) d = Math.Round(d * Math.Pow(10, exp), 15);
+            if (exp != 0) d = d * Math.Pow(10, exp);
 
             return d;
         }
