@@ -14,6 +14,11 @@ namespace Utf8Utils.Collections
         public static byte At(this ArraySegment<byte> array, int index) => array.Array[array.Offset + index];
 
         /// <summary>
+        /// 指定インデックスの要素を取得。
+        /// </summary>
+        public static T At<T>(this ArraySegment<T> array, int index) => array.Array[array.Offset + index];
+
+        /// <summary>
         /// <see cref="ArraySegment{T}"/>の分解。
         /// </summary>
         public static void Deconstruct<T>(this ArraySegment<T> segment, out T[] array, out int offset, out int count)
@@ -304,5 +309,14 @@ namespace Utf8Utils.Collections
                 b += 1;
             }
         }
+
+        /// <summary>
+        /// 配列を一定個数ずつ区切る。
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="array"></param>
+        /// <param name="windowSize"></param>
+        /// <returns></returns>
+        public static SegmentEnumerable<T> Segment<T>(this T[] array, int windowSize) => new SegmentEnumerable<T>(array, windowSize);
     }
 }
