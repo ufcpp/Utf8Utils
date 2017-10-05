@@ -145,5 +145,7 @@ namespace Utf8Utils.Text
             object IEnumerator.Current => Current;
             void IDisposable.Dispose() { }
         }
+
+        public static implicit operator Utf8ArraySegment(Utf8Array s) => new Utf8ArraySegment(s._buffer);
     }
 }
