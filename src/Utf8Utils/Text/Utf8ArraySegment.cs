@@ -270,5 +270,23 @@ namespace Utf8Utils.Text
             object IEnumerator.Current => Current;
             void IDisposable.Dispose() { }
         }
+
+        /// <summary>
+        /// <see cref="ArraySegment{T}"/>を配列化。
+        /// </summary>
+        /// <remarks>
+        /// <see cref="ArraySegment{T}"/>の場合、長大なバイト列の中の一部分を指していることがあって、ずっと元の配列を持っていたくないことがある。
+        /// なので、<see cref="ArraySegment{T}"/>が参照している範囲だけをコピーした配列を作って返す。
+        ///
+        /// <see cref="ArraySegment{T}"/>が配列全体を指してる(Offset が 0 で、Count が配列長に一致)ときは、もったいないので<see cref="ArraySegment{T}.Array"/>をそのまま返す。
+        /// </remarks>
+        /// <returns></returns>
+        public Utf8Array ToArray()
+        {
+            var array = _buffer.Offset == 0 && _buffer.Count == _buffer.Array.Length
+                ? _buffer.Array
+                : _buffer.ToArray();
+            return new Utf8Array(array);
+        }
     }
 }

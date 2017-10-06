@@ -9,26 +9,34 @@ using System;
 
 namespace Utf8Utils.Json
 {
-    public enum ReaderTokenType
+    public enum JsonTokenType
     {
-        // Start = 0 state reserved for internal use
-        ObjectStart = 1,
-        ObjectEnd = 2,
-        ArrayStart = 3,
-        ArrayEnd = 4,
-        Property = 5,
-        Value = 6
+        None,
+        StartObject,
+        EndObject,
+        StartArray,
+        EndArray,
+        Key,
+        Comment,
+        Value,
+        Null,
+        Undefined,
     };
 
-    public enum ReaderValueType
+    public enum JsonValueType
     {
-        String,
-        Number,
+        Unknown,
         Object,
         Array,
+        Number,
+        String,
         True,
         False,
-        Null
+        Null,
+        Undefined,
+        NaN,
+        Infinity,
+        NegativeInfinity,
     }
 
     public class JsonReader
@@ -37,7 +45,7 @@ namespace Utf8Utils.Json
         private int _index;
         private int _insideObject;
         private int _insideArray;
-        public ReaderTokenType TokenType;
+        public JsonTokenType TokenType;
         private bool _jsonStartIsObject;
 
         public JsonReader(Utf8ArraySegment str)
@@ -67,7 +75,7 @@ namespace Utf8Utils.Json
             return canRead;
         }
 
-        public Utf8ArraySegment GetName()
+        public Utf8ArraySegment GetKey()
         {
             SkipEmpty();
             var str = ReadStringValue();
@@ -75,11 +83,22 @@ namespace Utf8Utils.Json
             return str;
         }
 
-        public ReaderValueType GetJsonValueType()
+        /// <summary>
+        /// 空白文字かどうかを判定。
+        /// JSON 的には Space, Horizontal Tab, Line Feed, Carriage Return のみ。
+        /// </summary>
+        /// <param name="ascii"></param>
+        /// <returns></returns>
+        public static bool IsWhitespace(byte c)
+        {
+            return c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0D;
+        }
+
+        public JsonValueType GetJsonValueType()
         {
             var nextByte = (byte)_str[_index];
 
-            while (Utf8ArraySegment.IsWhitespace(nextByte))
+            while (IsWhitespace(nextByte))
             {
                 _index++;
                 nextByte = (byte)_str[_index];
@@ -87,37 +106,37 @@ namespace Utf8Utils.Json
 
             if (nextByte == '"')
             {
-                return ReaderValueType.String;
+                return JsonValueType.String;
             }
 
             if (nextByte == '{')
             {
-                return ReaderValueType.Object;
+                return JsonValueType.Object;
             }
 
             if (nextByte == '[')
             {
-                return ReaderValueType.Array;
+                return JsonValueType.Array;
             }
 
             if (nextByte == 't')
             {
-                return ReaderValueType.True;
+                return JsonValueType.True;
             }
 
             if (nextByte == 'f')
             {
-                return ReaderValueType.False;
+                return JsonValueType.False;
             }
 
             if (nextByte == 'n')
             {
-                return ReaderValueType.Null;
+                return JsonValueType.Null;
             }
 
             if (nextByte == '-' || (nextByte >= '0' && nextByte <= '9'))
             {
-                return ReaderValueType.Number;
+                return JsonValueType.Number;
             }
 
             throw new FormatException("Invalid json, tried to read char '" + nextByte + "'.");
@@ -129,18 +148,15 @@ namespace Utf8Utils.Json
             SkipEmpty();
             switch (type)
             {
-                case ReaderValueType.String:
+                case JsonValueType.String:
                     return ReadStringValue();
-                case ReaderValueType.Number:
-                    return ReadNumberValue();
-                case ReaderValueType.True:
-                    return ReadTrueValue();
-                case ReaderValueType.False:
-                    return ReadFalseValue();
-                case ReaderValueType.Null:
-                    return ReadNullValue();
-                case ReaderValueType.Object:
-                case ReaderValueType.Array:
+                case JsonValueType.Number:
+                case JsonValueType.True:
+                case JsonValueType.False:
+                case JsonValueType.Null:
+                    return ReadWord();
+                case JsonValueType.Object:
+                case JsonValueType.Array:
                     return default(Utf8ArraySegment);
                 default:
                     throw new ArgumentException("Invalid json value type '" + type + "'.");
@@ -184,115 +200,53 @@ namespace Utf8Utils.Json
             return numOfBackSlashes % 2 != 0;
         }
 
-        private Utf8ArraySegment ReadNumberValue()
+        private static bool IsWordBreak(byte c)
         {
-            var count = _index;
-
-            var nextByte = (byte)_str[count];
-            if (nextByte == '-')
+            switch (c)
             {
-                count++;
+                case (byte)' ':
+                case (byte)'\t':
+                case (byte)'\n':
+                case (byte)'\r':
+                case (byte)'{':
+                case (byte)'}':
+                case (byte)'[':
+                case (byte)']':
+                case (byte)',':
+                case (byte)':':
+                case (byte)'\"':
+                    return true;
+                default:
+                    return false;
             }
+        }
 
-            nextByte = (byte)_str[count];
-            while (nextByte >= '0' && nextByte <= '9')
-            {
-                count++;
-                nextByte = (byte)_str[count];
-            }
+        private Utf8ArraySegment ReadWord()
+        {
+            var len = _str.Length;
+            var i = _index;
 
-            if (nextByte == '.')
-            {
-                count++;
-            }
+            while (i < len && !IsWordBreak(_str[i])) ++i;
 
-            nextByte = (byte)_str[count];
-            while (nextByte >= '0' && nextByte <= '9')
-            {
-                count++;
-                nextByte = (byte)_str[count];
-            }
-
-            if (nextByte == 'e' || nextByte == 'E')
-            {
-                count++;
-                nextByte = (byte)_str[count];
-                if (nextByte == '-' || nextByte == '+')
-                {
-                    count++;
-                }
-                nextByte = (byte)_str[count];
-                while (nextByte >= '0' && nextByte <= '9')
-                {
-                    count++;
-                    nextByte = (byte)_str[count];
-                }
-            }
-
-            var length = count - _index;
-            var resultStr = _str.Substring(_index, count - _index);
-            _index += length;
+            var length = i - _index;
+            var resultStr = _str.Substring(_index, length);
+            _index = i;
             SkipEmpty();
             return resultStr;
         }
 
-        private Utf8ArraySegment ReadTrueValue()
-        {
-            var trueString = _str.Substring(_index, 4);
-            if ((byte)trueString[1] != 'r' || (byte)trueString[2] != 'u' || (byte)trueString[3] != 'e')
-            {
-                throw new FormatException("Invalid json, tried to read 'true'.");
-            }
-
-            _index += 4;
-
-            SkipEmpty();
-            return trueString;
-        }
-
-        private Utf8ArraySegment ReadFalseValue()
-        {
-            var falseString = _str.Substring(_index, 5);
-            if ((byte)falseString[1] != 'a' || (byte)falseString[2] != 'l' || (byte)falseString[3] != 's' || (byte)falseString[4] != 'e')
-            {
-                throw new FormatException("Invalid json, tried to read 'false'.");
-            }
-
-            _index += 5;
-
-            SkipEmpty();
-            return falseString;
-        }
-
-        private Utf8ArraySegment ReadNullValue()
-        {
-            var nullString = _str.Substring(_index, 4);
-            if ((byte)nullString[1] != 'u' || (byte)nullString[2] != 'l' || (byte)nullString[3] != 'l')
-            {
-                throw new FormatException("Invalid json, tried to read 'null'.");
-            }
-
-            _index += 4;
-
-            SkipEmpty();
-            return nullString;
-        }
-
         private void SkipEmpty()
         {
-            var nextByte = (byte)_str[_index];
-
-            while (Utf8ArraySegment.IsWhitespace(nextByte))
-            {
-                _index++;
-                nextByte = (byte)_str[_index];
-            }
+            var len = _str.Length;
+            var i = _index;
+            while (i < len && IsWhitespace(_str[i])) ++i;
+            _index = i;
         }
 
         private void MoveToNextTokenType()
         {
             var nextByte = (byte)_str[_index];
-            while (Utf8ArraySegment.IsWhitespace(nextByte))
+            while (IsWhitespace(nextByte))
             {
                 _index++;
                 nextByte = (byte)_str[_index];
@@ -300,54 +254,54 @@ namespace Utf8Utils.Json
 
             switch (TokenType)
             {
-                case ReaderTokenType.ObjectStart:
+                case JsonTokenType.StartObject:
                     if (nextByte != '}')
                     {
-                        TokenType = ReaderTokenType.Property;
+                        TokenType = JsonTokenType.Key;
                         return;
                     }
                     break;
-                case ReaderTokenType.ObjectEnd:
+                case JsonTokenType.EndObject:
                     if (nextByte == ',')
                     {
                         _index++;
                         if (_insideObject == _insideArray)
                         {
-                            TokenType = !_jsonStartIsObject ? ReaderTokenType.Property : ReaderTokenType.Value;
+                            TokenType = !_jsonStartIsObject ? JsonTokenType.Key : JsonTokenType.Value;
                             return;
                         }
-                        TokenType = _insideObject > _insideArray ? ReaderTokenType.Property : ReaderTokenType.Value;
+                        TokenType = _insideObject > _insideArray ? JsonTokenType.Key : JsonTokenType.Value;
                         return;
                     }
                     break;
-                case ReaderTokenType.ArrayStart:
+                case JsonTokenType.StartArray:
                     if (nextByte != ']')
                     {
-                        TokenType = ReaderTokenType.Value;
+                        TokenType = JsonTokenType.Value;
                         return;
                     }
                     break;
-                case ReaderTokenType.ArrayEnd:
+                case JsonTokenType.EndArray:
                     if (nextByte == ',')
                     {
                         _index++;
                         if (_insideObject == _insideArray)
                         {
-                            TokenType = !_jsonStartIsObject ? ReaderTokenType.Property : ReaderTokenType.Value;
+                            TokenType = !_jsonStartIsObject ? JsonTokenType.Key : JsonTokenType.Value;
                             return;
                         }
-                        TokenType = _insideObject > _insideArray ? ReaderTokenType.Property : ReaderTokenType.Value;
+                        TokenType = _insideObject > _insideArray ? JsonTokenType.Key : JsonTokenType.Value;
                         return;
                     }
                     break;
-                case ReaderTokenType.Property:
+                case JsonTokenType.Key:
                     if (nextByte == ',')
                     {
                         _index++;
                         return;
                     }
                     break;
-                case ReaderTokenType.Value:
+                case JsonTokenType.Value:
                     if (nextByte == ',')
                     {
                         _index++;
@@ -356,25 +310,45 @@ namespace Utf8Utils.Json
                     break;
             }
 
-            _index++;
             switch (nextByte)
             {
                 case (byte)'{':
+                    _index++;
                     _insideObject++;
-                    TokenType = ReaderTokenType.ObjectStart;
+                    TokenType = JsonTokenType.StartObject;
                     return;
                 case (byte)'}':
+                    _index++;
                     _insideObject--;
-                    TokenType = ReaderTokenType.ObjectEnd;
+                    TokenType = JsonTokenType.EndObject;
                     return;
                 case (byte)'[':
+                    _index++;
                     _insideArray++;
-                    TokenType = ReaderTokenType.ArrayStart;
+                    TokenType = JsonTokenType.StartArray;
                     return;
                 case (byte)']':
+                    _index++;
                     _insideArray--;
-                    TokenType = ReaderTokenType.ArrayEnd;
+                    TokenType = JsonTokenType.EndArray;
                     return;
+                case (byte)'0':
+                case (byte)'1':
+                case (byte)'2':
+                case (byte)'3':
+                case (byte)'4':
+                case (byte)'5':
+                case (byte)'6':
+                case (byte)'7':
+                case (byte)'8':
+                case (byte)'9':
+                case (byte)'\"':
+                case (byte)'t': // true
+                case (byte)'f': // false
+                case (byte)'n': // null
+                    TokenType = JsonTokenType.Value;
+                    break;
+
                 default:
                     throw new FormatException("Unable to get next token type. Check json format.");
             }

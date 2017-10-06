@@ -123,6 +123,90 @@ namespace Utf8Utils.Text
             return d;
         }
 
+        public static Number ParseNumber<TUtf8>(this TUtf8 s) where TUtf8 : IUtf8String => ParseNumber(s.Utf8);
+
+        private static Number ParseNumber(ArraySegment<byte> seg)
+        {
+            var array = seg.Array;
+            var begin = seg.Offset;
+            var end = seg.Offset + seg.Count;
+            return ParseNumber(array, begin, end);
+        }
+
+        private static Number ParseNumber(byte[] array, int begin, int end)
+        {
+            if (begin == end) return default(Number); // 例外の方がいい？
+
+            switch (array[begin])
+            {
+                case (byte)'t':
+                    if (EqualsTrue(new ArraySegment<byte>(array, begin, end))) return (Number)true;
+                    break;
+                case (byte)'f':
+                    if (EqualsFalse(new ArraySegment<byte>(array, begin, end))) return (Number)false;
+                    break;
+                case (byte)'n':
+                    if (EqualsNull(new ArraySegment<byte>(array, begin, end))) return default(Number);
+                    break;
+            }
+
+            var neg = false;
+            var y = -1;
+            var x = 0L;
+
+            {
+                var c = array[begin];
+                if (c == '-') neg = true;
+                else if (c == '.') y = 0;
+                else x = c - '0';
+            }
+
+            int i = begin + 1;
+            for (; i < end; i++)
+            {
+                var c = array[i];
+                if (c == '.')
+                {
+                    y = 0;
+                    continue;
+                }
+                else if (c == 'E' || c == 'e')
+                {
+                    i++;
+                    break;
+                }
+                x *= 10;
+                if (y >= 0) y++;
+                x += c - '0';
+            }
+
+            var expNeg = false;
+            var exp = 0;
+            for (; i < end; i++)
+            {
+                var c = array[i];
+                if (c == '-')
+                {
+                    expNeg = true;
+                    continue;
+                }
+                else if (c == '+') continue;
+                exp *= 10;
+                exp += c - '0';
+            }
+
+            if (neg) x = -x;
+            if (expNeg) exp = -exp;
+
+            if (y < 0) return (Number)x;
+
+            var d = (double)x;
+            exp -= y;
+            if (exp != 0) d = d * Math.Pow(10, exp);
+
+            return (Number)d;
+        }
+
         /// <summary>
         /// == "true"
         /// </summary>

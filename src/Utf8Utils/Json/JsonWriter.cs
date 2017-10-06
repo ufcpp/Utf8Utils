@@ -25,6 +25,23 @@ namespace Utf8Utils.Json
         ArraySegment<byte> Result { get; }
     }
 
+    public static class FormatterExtensions
+    {
+        public static void WriteProperty(this IFormatter f, UnionString key, Number value)
+        {
+            f.Separator();
+            f.Key(key);
+            f.Value(value);
+        }
+
+        public static void WriteProperty(this IFormatter f, UnionString key, UnionString value)
+        {
+            f.Separator();
+            f.Key(key);
+            f.Value(value);
+        }
+    }
+
     public class JsonWriter : IFormatter
     {
         ResizableArray _buffer;
