@@ -4,6 +4,7 @@ namespace Utf8Utils.Text
 {
     /// <summary>
     /// <see cref="Utf8ArraySegment"/>本体に入れたくなかったメソッドをいくつか。
+    /// 数値のフォーマットとか文字列のエスケープとか、C# や JSON (を含むたいていのC由来言語)の構文であって他の形式がなくもないものなので、本体には含めづらい。
     /// </summary>
     public static class Utf8StringExtensions
     {
@@ -255,6 +256,200 @@ namespace Utf8Utils.Text
                 var p = (uint*)(a + s.Offset);
                 return *p == Null;
             }
+        }
+
+        /// <summary>
+        /// 配列を作ってそこに<see cref="Unescape(ArraySegment{byte}, byte*)"/>。
+        /// </summary>
+        /// <remarks>
+        /// 「エスケープした文字列よりも、復元結果が長くなるはずはない」という前提で、エスケープした文字列を同じ長さで配列を確保してしまう。
+        /// 2パス走査でちゃんとした長さを測ってから配列確保するよりもその方が軽そうなので。
+        ///
+        /// ワーストケースとしては \u0061 みたいなUnicodeエスケープが続く場合だけども、その場合は3倍ほど無駄に領域確保することになる。
+        /// まあ、エスケープ文字だらけな文字列とかそんなに来ないだろうという想定。
+        /// </remarks>
+        /// <param name="s">エスケープした文字列。</param>
+        /// <returns>復元結果。</returns>
+        public static unsafe ArraySegment<byte> Unescape(this ArraySegment<byte> s)
+        {
+            var buffer = new byte[s.Count];
+            int len;
+
+            fixed(byte* to = buffer)
+            {
+                len = Unescape(s, to);
+            }
+
+            return new ArraySegment<byte>(buffer, 0, len);
+        }
+
+        public static unsafe Utf8ArraySegment Unescape<TUtf8>(this TUtf8 s) where TUtf8 : IUtf8String => new Utf8ArraySegment(Unescape(s.Utf8));
+
+        /// <summary>
+        /// <see cref="Unescape(ArraySegment{byte}, byte*)"/>してから string 化。
+        /// </summary>
+        /// <param name="s">エスケープした文字列。</param>
+        /// <returns>復元結果。</returns>
+        /// <remarks>
+        /// <code><![CDATA[ new Utf8ArraySegment(Unescape(s)).ToString() ]]></code> で同じことができるものの。
+        /// <see cref="Unescape(ArraySegment{byte})"/>が内部で配列を1個ヒープ確保しちゃうのがもったいないので。
+        /// stackalloc した領域に<see cref="Unescape(ArraySegment{byte}, byte*)"/>して、それを直接<see cref="System.Text.Encoding.GetChars(byte*, int, char*, int)"/>する。
+        /// </remarks>
+        public static unsafe string UnescapeToString(this ArraySegment<byte> s)
+        {
+            // Count が大きい時に stackalloc でいいのかという問題はあり
+            // Span が使えるなら count <= 1024 ? (Span<byte>)stackalloc byte[count] : (Span<byte>)new byte[count] とかやるんだけど。
+            var buffer = stackalloc byte[s.Count];
+            var len = Unescape(s, buffer);
+
+            var utf8 = System.Text.Encoding.UTF8;
+
+#if NET35
+            var count = utf8.GetCharCount(buffer, len);
+            var str = new string('\0', count);
+            fixed(char* p = str)
+            {
+                utf8.GetChars(buffer, len, p, count);
+            }
+            return str;
+#else
+            return utf8.GetString(buffer, len);
+#endif
+        }
+
+        public static unsafe string UnescapeToString<TUtf8>(this TUtf8 s) where TUtf8 : IUtf8String => UnescapeToString(s.Utf8);
+
+        /// <summary>
+        /// \ エスケープ文字列から元の文字列を復元。
+        /// </summary>
+        /// <param name="s">エスケープした文字列。</param>
+        /// <param name="to">復元先。</param>
+        /// <returns>復元後の長さ。</returns>
+        public static unsafe int Unescape(this ArraySegment<byte> s, byte* to)
+        {
+            var i = 0;
+            var len = 0;
+
+            bool TryRead(out byte b)
+            {
+                i++;
+                if (i < s.Count)
+                {
+                    b = s.Array[i + s.Offset];
+                    return true;
+                }
+                else
+                {
+                    b = 0;
+                    return false;
+                }
+            }
+
+            void Write(byte c)
+            {
+                *to = c;
+                to++;
+                len++;
+            }
+
+            uint ParseHex(byte b)
+            {
+                if ('0' <= b && b <= '9') return (uint)b - (byte)'0';
+                if ('a' <= b && b <= 'f') return (uint)b - (byte)'a' + 10;
+                if ('A' <= b && b <= 'F') return (uint)b - (byte)'A' + 10;
+                return 0;
+            }
+
+            while (TryRead(out var c))
+            {
+                if (c != (byte)'\\')
+                {
+                    Write(c);
+                    continue;
+                }
+
+                if (!TryRead(out c)) throw new FormatException();
+
+                switch (c)
+                {
+                    case (byte)'"':
+                    case (byte)'\\':
+                    case (byte)'/':
+                        Write(c);
+                        break;
+                    case (byte)'b':
+                        Write((byte)'\b');
+                        break;
+                    case (byte)'f':
+                        Write((byte)'\f');
+                        break;
+                    case (byte)'n':
+                        Write((byte)'\n');
+                        break;
+                    case (byte)'r':
+                        Write((byte)'\r');
+                        break;
+                    case (byte)'t':
+                        Write((byte)'\t');
+                        break;
+                    case (byte)'u':
+                        {
+                            if (!TryRead(out var b1)) throw new FormatException();
+                            if (!TryRead(out var b2)) throw new FormatException();
+                            if (!TryRead(out var b3)) throw new FormatException();
+                            if (!TryRead(out var b4)) throw new FormatException();
+
+                            var cp = (ParseHex(b1) << 12) | (ParseHex(b2) << 8) | (ParseHex(b3) << 4) | ParseHex(b4);
+
+                            if (char.IsHighSurrogate((char)cp))
+                            {
+                                // サロゲートペアの high surrogate だけが \u エスケープされてる状態とかは考えなくていいよね？
+                                if (!TryRead(out c) || c != (byte)'\\') throw new FormatException();
+                                if (!TryRead(out c) || c != (byte)'u') throw new FormatException();
+
+                                if (!TryRead(out b1)) throw new FormatException();
+                                if (!TryRead(out b2)) throw new FormatException();
+                                if (!TryRead(out b3)) throw new FormatException();
+                                if (!TryRead(out b4)) throw new FormatException();
+
+                                var low = (ParseHex(b1) << 12) | (ParseHex(b2) << 8) | (ParseHex(b3) << 4) | ParseHex(b4);
+
+                                cp = (cp & 0b00000011_11111111U) + 0b100_0000;
+                                cp <<= 10;
+                                cp |= (low & 0b00000011_11111111U);
+                            }
+
+                            var count = Utf8Encoder.Encode(cp, to);
+                            len += count;
+                            to += count;
+                        }
+                        break;
+                    case (byte)'U':
+                        // C# には \Uxxxxxxxx で32ビットのコードポイントをエスケープする構文あり
+                        {
+                            if (!TryRead(out var b1)) throw new FormatException();
+                            if (!TryRead(out var b2)) throw new FormatException();
+                            if (!TryRead(out var b3)) throw new FormatException();
+                            if (!TryRead(out var b4)) throw new FormatException();
+                            if (!TryRead(out var b5)) throw new FormatException();
+                            if (!TryRead(out var b6)) throw new FormatException();
+                            if (!TryRead(out var b7)) throw new FormatException();
+                            if (!TryRead(out var b8)) throw new FormatException();
+
+                            var cp = (ParseHex(b1) << 28) | (ParseHex(b2) << 24) | (ParseHex(b3) << 20) | (ParseHex(b4) << 16)
+                                | (ParseHex(b5) << 12) | (ParseHex(b6) << 8) | (ParseHex(b7) << 4) | ParseHex(b8);
+
+                            var count = Utf8Encoder.Encode(cp, to);
+                            len += count;
+                            to += count;
+                        }
+                        break;
+                    default:
+                        throw new FormatException();
+                }
+            }
+
+            return len;
         }
     }
 }
