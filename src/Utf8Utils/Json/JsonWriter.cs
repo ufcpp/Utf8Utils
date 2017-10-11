@@ -263,7 +263,13 @@ namespace Utf8Utils.Json
             var index = _buffer.Count - 1;
             for (int i = 0; i < digits; i++, index--)
             {
+#if NETSTANDARD1_3
+                var div= value / 10;
+                var rem = value - (div * 10);
+                value = div;
+#else
                 value = Math.DivRem(value, 10, out var rem);
+#endif
                 _buffer[index] = unchecked((byte)('0' + rem));
             }
         }

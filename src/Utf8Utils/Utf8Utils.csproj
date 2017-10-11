@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net35;net46;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net35;net46;netstandard1.3;netstandard2.0</TargetFrameworks>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>UTF8 Utility. Decode, encode, search, compare, and getting hashcode are directly on ArraySegment&lt;byte&gt;. There is no string allocation.</Description>
@@ -10,10 +10,10 @@
     <RepositoryUrl>https://github.com/ufcpp/Utf8Utils</RepositoryUrl>
     <PackageTags>UTF8</PackageTags>
     <Copyright>Nobuyuki Iwanaga</Copyright>
-    <AssemblyVersion>1.2.0.0</AssemblyVersion>
-    <FileVersion>1.2.0.0</FileVersion>
-    <Version>1.2.0</Version>
-    <PackageReleaseNotes>Add Unescape method</PackageReleaseNotes>
+    <AssemblyVersion>1.2.1.0</AssemblyVersion>
+    <FileVersion>1.2.1.0</FileVersion>
+    <Version>1.2.1</Version>
+    <PackageReleaseNotes>Support netstandard1.3</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
