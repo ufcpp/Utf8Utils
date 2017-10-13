@@ -222,7 +222,7 @@ namespace Utf8Utils.Collections
             {
                 fixed (char* pa = &source[0])
                 fixed (char* pb = &destination[0])
-                    CopyTo((byte*)pa, (byte*)pb, length * 2);
+                    Copy((byte*)pa, (byte*)pb, length * 2);
             }
         }
 
@@ -247,7 +247,7 @@ namespace Utf8Utils.Collections
             {
                 fixed (byte* pa = &source[0])
                 fixed (byte* pb = &destination[0])
-                    CopyTo(pa + sourceOffset, pb + destinationOffset, length);
+                    Copy(pa + sourceOffset, pb + destinationOffset, length);
             }
         }
 
@@ -262,11 +262,11 @@ namespace Utf8Utils.Collections
             unsafe
             {
                 fixed (byte* pb = &destination[0])
-                    CopyTo(source, pb + destinationOffset, length);
+                    Copy(source, pb + destinationOffset, length);
             }
         }
 
-        private static unsafe void CopyTo(byte* a, byte* b, int length)
+        public static unsafe void Copy(byte* a, byte* b, int length)
         {
             if (length < 4) goto LT4;
             if (length < 8) goto LT8;

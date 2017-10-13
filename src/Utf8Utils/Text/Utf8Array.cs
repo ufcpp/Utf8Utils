@@ -29,6 +29,8 @@ namespace Utf8Utils.Text
 
         public ArraySegment<byte> Utf8 => new ArraySegment<byte>(_buffer);
 
+        public bool IsNull => _buffer == null;
+
         /// <summary>
         /// byte 列の列挙用。
         /// </summary>
@@ -63,6 +65,9 @@ namespace Utf8Utils.Text
         /// コードポイントで数えた文字数。
         /// </summary>
         public int CodePointLength => Utf8Decoder.GetLength(new ArraySegment<byte>(_buffer));
+
+        public static explicit operator Utf8Array(string s) => new Utf8Array(s);
+        public static explicit operator Utf8Array(byte[] s) => new Utf8Array(s);
 
         #region equality
 #pragma warning disable 1591
