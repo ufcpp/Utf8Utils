@@ -297,6 +297,8 @@ namespace Utf8Utils.Text
         /// </remarks>
         public static unsafe string UnescapeToString(this ArraySegment<byte> s)
         {
+            if (s.Count == 0) return "";
+
             // Count が大きい時に stackalloc でいいのかという問題はあり
             // Span が使えるなら count <= 1024 ? (Span<byte>)stackalloc byte[count] : (Span<byte>)new byte[count] とかやるんだけど。
             var buffer = stackalloc byte[s.Count];
@@ -332,10 +334,10 @@ namespace Utf8Utils.Text
 
             bool TryRead(out byte b)
             {
-                i++;
-                if (i < s.Count)
+                var index = i++;
+                if (index < s.Count)
                 {
-                    b = s.Array[i + s.Offset];
+                    b = s.Array[index + s.Offset];
                     return true;
                 }
                 else
