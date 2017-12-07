@@ -11,19 +11,19 @@ namespace Utf8UtilsTest
         public void Segment()
         {
             const int DataLength = 1000;
-            Segment(DataLength, 1);
-            Segment(DataLength, 2);
-            Segment(DataLength, 5);
-            Segment(DataLength, 10);
-            Segment(DataLength, 11);
-            Segment(DataLength, 17);
-            Segment(DataLength, 19);
+            SegmentItem(DataLength, 1);
+            SegmentItem(DataLength, 2);
+            SegmentItem(DataLength, 5);
+            SegmentItem(DataLength, 10);
+            SegmentItem(DataLength, 11);
+            SegmentItem(DataLength, 17);
+            SegmentItem(DataLength, 19);
 
-            Assert.Throws(typeof(ArgumentException), () => Segment(DataLength, 0));
-            Assert.Throws(typeof(ArgumentException), () => Segment(DataLength, -1));
+            Assert.Throws<ArgumentException>(() => SegmentItem(DataLength, 0));
+            Assert.Throws<ArgumentException>(() => SegmentItem(DataLength, -1));
         }
 
-        private static void Segment(int dataLength, int windowSize)
+        private static void SegmentItem(int dataLength, int windowSize)
         {
             var data = Enumerable.Range(0, dataLength).ToArray();
 

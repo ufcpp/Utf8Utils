@@ -99,7 +99,7 @@ namespace Utf8UtilsTest
             var r = new JsonReader(json);
 
             var s = ParseString(r);
-            Assert.Equal(s, "abc def");
+            Assert.Equal("abc def", s);
         }
 
         private static string ParseString(JsonReader r)

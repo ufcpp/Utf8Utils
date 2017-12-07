@@ -28,7 +28,7 @@ namespace Utf8UtilsTest
         }
 
         [Fact]
-        public void Equals()
+        public void Utf8ArraySegmentEquals()
         {
             foreach (var (a, b) in StringTestData.Pairs)
             {
