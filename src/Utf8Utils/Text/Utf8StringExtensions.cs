@@ -397,6 +397,9 @@ namespace Utf8Utils.Text
                     case (byte)'t':
                         Write((byte)'\t');
                         break;
+                    case (byte)'0':
+                        Write((byte)'\0');
+                        break;
                     case (byte)'u':
                         {
                             if (!TryRead(out var b1)) throw new FormatException();
