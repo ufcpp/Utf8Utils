@@ -25,5 +25,21 @@ namespace Utf8UtilsTest
             Assert.Equal(unescaped, x.ToString());
             Assert.Equal(unescaped, escapedUtf8.UnescapeToString());
         }
+
+        /// <summary>
+        /// 文字列中にエスケープしていない " が入ってきた場合でも
+        /// 不正な扱いをせずに変換をしていない結果にする
+        /// </summary>
+        [Fact]
+        public void NotEscapedDoubleQuate()
+        {
+            var utf8 = Encoding.UTF8;
+
+            var text = @"""";
+            var utf8Text = new Utf8Array(utf8.GetBytes(text));
+            var actual = utf8Text.UnescapeToString();
+
+            Assert.Equal(text, actual);
+        }
     }
 }

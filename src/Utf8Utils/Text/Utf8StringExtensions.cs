@@ -327,6 +327,9 @@ namespace Utf8Utils.Text
         /// <param name="s">エスケープした文字列。</param>
         /// <param name="to">復元先。</param>
         /// <returns>復元後の長さ。</returns>
+        /// <remarks>
+        /// 文字列中にエスケープされていない " など、不正な入力がされた場合の挙動は未定義
+        /// </remarks>
         public static unsafe int Unescape(this ArraySegment<byte> s, byte* to)
         {
             var i = 0;
